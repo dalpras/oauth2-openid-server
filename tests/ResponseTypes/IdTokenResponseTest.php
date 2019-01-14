@@ -42,7 +42,7 @@ class IdTokenResponseTest extends TestCase
         $this->assertObjectHasAttribute('refresh_token', $json);
     }
 
-    public function testOpenIDConnectHttpResponse()
+    public function testOpenIDHttpResponse()
     {
         $responseType = new IdTokenResponse(new IdentityProvider(), new ClaimExtractor());
         $response = $this->processResponseType($responseType, ['openid']);

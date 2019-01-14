@@ -29,7 +29,7 @@ $app = new App([
 
         $privateKeyPath = 'file://' . __DIR__ . '/../private.key';
 
-        // OpenID Connect Response Type
+        // OpenID Response Type
         $responseType = new IdTokenResponse(new IdentityRepository(), new ClaimExtractor());
 
         // Setup the authorization server

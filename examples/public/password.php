@@ -20,7 +20,7 @@ include __DIR__ . '/../vendor/autoload.php';
 $app = new App([
     // Add the authorization server to the DI container
     AuthorizationServer::class => function () {
-        // OpenID Connect Response Type
+        // OpenID Response Type
         $responseType = new IdTokenResponse(new IdentityRepository(), new ClaimExtractor());
 
         // Setup the authorization server
@@ -55,22 +55,17 @@ $app->post(
 
         /* @var \League\OAuth2\Server\AuthorizationServer $server */
         $server = $app->getContainer()->get(AuthorizationServer::class);
-
         try {
-
-            // Try to respond to the access token request
             return $server->respondToAccessTokenRequest($request, $response);
+
         } catch (OAuthServerException $exception) {
+            $payloadException = new OAuthServerExceptionPayloadDecorator($exception);
+            return $payloadException->generateHttpResponse($response);
 
-            // All instances of OAuthServerException can be converted to a PSR-7 response
-            return $exception->generateHttpResponse($response);
-        } catch (\Exception $exception) {
-
-            // Catch unexpected exceptions
-            $body = $response->getBody();
-            $body->write($exception->getMessage());
-
-            return $response->withStatus(500)->withBody($body);
+        } catch (Exception $exception) {
+            $oauthException = new OAuthServerException($exception->getMessage(), 0, 'unknown_error', 500);
+            $payloadException = new OAuthServerExceptionPayloadDecorator($oauthException);
+            return $payloadException->generateHttpResponse($response);
         }
     }
 );

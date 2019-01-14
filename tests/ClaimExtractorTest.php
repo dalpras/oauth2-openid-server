@@ -51,11 +51,11 @@ class ClaimExtractorTest extends TestCase
         $this->assertEmpty($result);
 
         // result
-        $result = $extractor->extract(['profile'], ['name' => 'Steve']);
-        $this->assertEquals($result['name'], 'Steve');
+        $result = $extractor->extract(['profile'], ['name' => 'Pluto']);
+        $this->assertEquals($result['name'], 'Pluto');
 
         // no result
-        $result = $extractor->extract(['profile'], ['invalid' => 'Steve']);
+        $result = $extractor->extract(['profile'], ['invalid' => 'Pluto']);
         $this->assertEmpty($result);
     }
 }

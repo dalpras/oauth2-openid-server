@@ -7,25 +7,34 @@ use DalPraS\OpenId\Server\Entities\ClaimSetEntityInterface;
 use DalPraS\OpenId\Server\Exception\InvalidArgumentException;
 use League\OAuth2\Server\Entities\ScopeEntityInterface;
 
+/**
+ * Contains custom and standard ClaimSets.
+ *
+ * It's possible to add a custom ClaimSet and "extract" using defined scopes.
+ * It's not possible to add a custom ClaimSet already present as a standard ClaimSet.
+ */
 class ClaimExtractor
 {
-    protected $claimSets;
+    /**
+     * @var array
+     */
+    protected $claimSets = [];
 
+    /**
+     * @var array
+     */
     protected $protectedClaims = ['openid', 'profile', 'email', 'address', 'phone'];
 
     /**
      * ClaimExtractor constructor.
+     *
      * @param ClaimSetEntity[] $claimSets
      */
     public function __construct($claimSets = [])
     {
-        // Add Default OpenID Connect Claims
+        // Add Default OpenID Claims
         // @see http://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
-        $this->addClaimSet(
-            new ClaimSetEntity('openid', [
-                'sub'
-            ])
-        );
+        $this->addClaimSet(new ClaimSetEntity('openid', ['sub']));
 
         $this->addClaimSet(
             new ClaimSetEntity('profile', [
@@ -51,11 +60,8 @@ class ClaimExtractor
                 'email_verified'
             ])
         );
-        $this->addClaimSet(
-            new ClaimSetEntity('address', [
-                'address'
-            ])
-        );
+        $this->addClaimSet(new ClaimSetEntity('address', ['address']));
+
         $this->addClaimSet(
             new ClaimSetEntity('phone', [
                 'phone_number',
@@ -63,6 +69,7 @@ class ClaimExtractor
             ])
         );
 
+        // add custom ClaimSets
         foreach ($claimSets as $claimSet) {
             $this->addClaimSet($claimSet);
         }
@@ -79,7 +86,7 @@ class ClaimExtractor
 
         if (in_array($scope, $this->protectedClaims) && !empty($this->claimSets[$scope])) {
             throw new InvalidArgumentException(
-                sprintf("%s is a protected scope and is pre-defined by the OpenID Connect specification.", $scope)
+                sprintf("%s is a protected scope and is pre-defined by the OpenID specification.", $scope)
             );
         }
 

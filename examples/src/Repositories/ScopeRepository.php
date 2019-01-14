@@ -14,9 +14,9 @@ class ScopeRepository extends \OAuth2ServerExamples\Repositories\ScopeRepository
     public function getScopeEntityByIdentifier($scopeIdentifier)
     {
         $scopes = [
-            // Without this OpenID Connect cannot work.
+            // Without this OpenID cannot work.
             'openid' => [
-                'description' => 'Enable OpenID Connect support'
+                'description' => 'Enable OpenID support'
             ],
             'basic' => [
                 'description' => 'Basic details about you',

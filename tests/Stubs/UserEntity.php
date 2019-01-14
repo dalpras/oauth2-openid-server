@@ -18,9 +18,9 @@ class UserEntity implements UserEntityInterface, ClaimSetInterface
     public function getClaims()
     {
         return [
-            'first_name'    => 'Steve',
-            'last_name'     => 'Rhoades',
-            'email'         => 'steve.rhoades@stephenrhoades.com'
+            'first_name'    => 'Pluto',
+            'last_name'     => 'Rotschield',
+            'email'         => 'pluto.rot@example.com'
         ];
     }
 }

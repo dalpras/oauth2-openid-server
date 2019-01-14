@@ -12,6 +12,10 @@ use Lcobucci\JWT\Signer\Key;
 use Lcobucci\JWT\Signer\Rsa\Sha256;
 use Lcobucci\JWT\Builder;
 
+/**
+ * Extends the BearerTokenResponse for adding
+ * the param tokenId needed in OpenId.
+ */
 class IdTokenResponse extends BearerTokenResponse
 {
     /**
@@ -24,10 +28,7 @@ class IdTokenResponse extends BearerTokenResponse
      */
     protected $claimExtractor;
 
-    public function __construct(
-        IdentityProviderInterface $identityProvider,
-        ClaimExtractor $claimExtractor
-    ) {
+    public function __construct(IdentityProviderInterface $identityProvider, ClaimExtractor $claimExtractor) {
         $this->identityProvider = $identityProvider;
         $this->claimExtractor   = $claimExtractor;
     }
@@ -92,8 +93,7 @@ class IdTokenResponse extends BearerTokenResponse
      * @param ScopeEntityInterface[] $scopes
      * @return bool
      */
-    private function isOpenIDRequest($scopes)
-    {
+    private function isOpenIDRequest($scopes) {
         // Verify scope and make sure openid exists.
         $valid  = false;
 
@@ -106,5 +106,8 @@ class IdTokenResponse extends BearerTokenResponse
 
         return $valid;
     }
+
+
+
 
 }

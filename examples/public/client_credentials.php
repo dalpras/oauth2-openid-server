@@ -29,7 +29,7 @@ $app = new App([
         $privateKey = 'file://' . __DIR__ . '/../private.key';
         //$privateKey = new CryptKey('file://path/to/private.key', 'passphrase'); // if private key has a pass phrase
 
-        // OpenID Connect Response Type
+        // OpenID Response Type
         $responseType = new IdTokenResponse(new IdentityRepository(), new ClaimExtractor());
 
         // Setup the authorization server
@@ -58,21 +58,18 @@ $app->post('/access_token', function (ServerRequestInterface $request, ResponseI
     $server = $app->getContainer()->get(AuthorizationServer::class);
 
     try {
-
-        // Try to respond to the request
         return $server->respondToAccessTokenRequest($request, $response);
+
     } catch (OAuthServerException $exception) {
+        $payloadException = new OAuthServerExceptionPayloadDecorator($exception);
+        return $payloadException->generateHttpResponse($response);
 
-        // All instances of OAuthServerException can be formatted into a HTTP response
-        return $exception->generateHttpResponse($response);
-    } catch (\Exception $exception) {
-
-        // Unknown exception
-        $body = new Stream('php://temp', 'r+');
-        $body->write($exception->getMessage());
-
-        return $response->withStatus(500)->withBody($body);
+    } catch (Exception $exception) {
+        $oauthException = new OAuthServerException($exception->getMessage(), 0, 'unknown_error', 500);
+        $payloadException = new OAuthServerExceptionPayloadDecorator($oauthException);
+        return $payloadException->generateHttpResponse($response);
     }
+
 });
 
 $app->run();

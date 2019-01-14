@@ -33,7 +33,7 @@ $app = new App([
 
         $privateKeyPath = 'file://' . __DIR__ . '/../private.key';
 
-        // OpenID Connect Response Type
+        // OpenID Response Type
         $responseType = new IdTokenResponse(new IdentityRepository(), new ClaimExtractor());
 
         // Setup the authorization server
@@ -94,14 +94,17 @@ $app->post('/access_token', function (ServerRequestInterface $request, ResponseI
 
     try {
         return $server->respondToAccessTokenRequest($request, $response);
-    } catch (OAuthServerException $exception) {
-        return $exception->generateHttpResponse($response);
-    } catch (\Exception $exception) {
-        $body = new Stream('php://temp', 'r+');
-        $body->write($exception->getMessage());
 
-        return $response->withStatus(500)->withBody($body);
+    } catch (OAuthServerException $exception) {
+        $payloadException = new OAuthServerExceptionPayloadDecorator($exception);
+        return $payloadException->generateHttpResponse($response);
+
+    } catch (Exception $exception) {
+        $oauthException = new OAuthServerException($exception->getMessage(), 0, 'unknown_error', 500);
+        $payloadException = new OAuthServerExceptionPayloadDecorator($oauthException);
+        return $payloadException->generateHttpResponse($response);
     }
+
 });
 
 $app->run();
