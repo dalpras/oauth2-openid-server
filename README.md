@@ -1,17 +1,13 @@
 # OAuth 2.0 OpenID Server
 
-[![Build Status](https://travis-ci.org/dalpras/oauth2-openid-server.svg?branch=master)](https://travis-ci.org/dalpras/oauth2-openid-server) [![Code Coverage](https://scrutinizer-ci.com/g/dalpras/oauth2-openid-server/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/dalpras/oauth2-openid-server/?branch=master) [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/dalpras/oauth2-openid-server/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/dalpras/oauth2-openid-server/?branch=master)
-
-This implements the OpenID specification on top of The PHP League's [OAuth2 Server](https://github.com/thephpleague/oauth2-server).
-This library is based on the work of [OAuth 2.0 OpenID Server](https://github.com/dalpras/oauth2-openid-server).
+This implements the OpenID specification on top of The PHP League's [OAuth2 Server](https://github.com/thephpleague/oauth2-server).  
+This library is based on the work of [OAuth 2.0 OpenID Server](https://github.com/steverhoades/oauth2-openid-connect-client).  
 We are all waiting for a OpenId Connect implementation in the [Official League OAuth2 Server](https://github.com/thephpleague/oauth2-server)!!
 
 ## Requirements
 
 * Requires PHP version 7.0 or greater.
 * [league/oauth2-server](https://github.com/thephpleague/oauth2-server) 5.1 or greater.
-
-Note: league/oauth2-server version may have a higher PHP requirement.
 
 ## Usage
 The following classes will need to be configured and passed to the AuthorizationServer in order to provide OpenID functionality.
@@ -74,9 +70,6 @@ The Payload decorator change the `OAuthServerException` of the League package in
 This is the example for an authorization code endpoint.
 
 ```php
-
-    ...
-
     try {
         // Validate the HTTP request and return an AuthorizationRequest object.
         // The auth request object can be serialized into a user's session
@@ -99,7 +92,6 @@ This is the example for an authorization code endpoint.
         return (new OAuthServerExceptionPayloadDecorator((new OAuthServerException($e->getMessage(), 0, 'unknown_error', 500))))
             ->generateHttpResponse($response);
     }
-
 ```
 
 For an access_token endpoint is possible to use the middlewares:
@@ -110,7 +102,6 @@ For an access_token endpoint is possible to use the middlewares:
         return $middleware->__invoke($psrRequest, $psrResponse, function($request, $response) {
             return $response;
         });
-
 ```
 
 ## UserEntity
@@ -135,7 +126,6 @@ class UserEntity implements UserEntityInterface, ClaimSetInterface
         return $this->attributes;
     }
 }
-
 ```
 
 ## ClaimSets
