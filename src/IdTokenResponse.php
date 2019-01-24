@@ -90,24 +90,18 @@ class IdTokenResponse extends BearerTokenResponse
     }
 
     /**
+     * Verify scope and make sure openid exists.
+     *
      * @param ScopeEntityInterface[] $scopes
      * @return bool
      */
     private function isOpenIDRequest($scopes) {
-        // Verify scope and make sure openid exists.
-        $valid  = false;
-
         foreach ($scopes as $scope) {
             if ($scope->getIdentifier() === 'openid') {
-                $valid = true;
-                break;
+                return true;
             }
         }
-
-        return $valid;
+        return false;
     }
-
-
-
 
 }
