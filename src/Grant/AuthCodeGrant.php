@@ -5,7 +5,8 @@ use League\OAuth2\Server\Exception\OAuthServerException;
 use League\OAuth2\Server\Entities\ScopeEntityInterface;
 
 /**
- * Override for fixing method
+ * Override for fixing method with php7.2
+ * Cannot riding a null value as an array
  */
 class AuthCodeGrant extends \League\OAuth2\Server\Grant\AuthCodeGrant {
 
