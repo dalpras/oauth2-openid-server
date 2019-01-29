@@ -50,13 +50,13 @@ class OAuthServerExceptionPayloadDecorator {
     }
 
     public function __get($property) {
-        if (property_exists($this->object, $property)) {
-            return $this->object->$property;
+        if (property_exists($this->response, $property)) {
+            return $this->response->$property;
         }
     }
 
     public function __set($property, $value) {
-        $this->object->$property = $value;
+        $this->response->$property = $value;
         return $this;
     }
 }
