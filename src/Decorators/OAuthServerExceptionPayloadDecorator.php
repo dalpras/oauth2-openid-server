@@ -10,8 +10,9 @@ use League\OAuth2\Server\Exception\OAuthServerException;
 /**
  * The OAuthServerException thrown by League OauthServer is together a PSR ResponseMessage and
  * an Exception.
- * As a PSR ResponseMessage it works as a Response. The Error Message generated is not a valid OpenId
- * error message because it lacks of the 'error_description'.
+ * As a PSR ResponseMessage it works as a Response. 
+ * In league/oauth-server version 7.4.0 the error_description is implemented for compatibility with OpenId.
+ * 'hint' and 'message' are removed.  
  * By using this decorator che message object is wrapped changing to a correct one.
  */
 class OAuthServerExceptionPayloadDecorator {
@@ -26,18 +27,18 @@ class OAuthServerExceptionPayloadDecorator {
         $payload = $this->response->getPayload();
         if ( !empty($payload) ) {
 
-            $messages = [];
+            // $messages = [];
             if (isset($payload['hint'])) {
-                $messages[] = $payload['hint'];
+                // $messages[] = $payload['hint'];
                 unset($payload['hint']);
             }
 
             if (isset($payload['message'])) {
-                $messages[] = $payload['message'];
+                // $messages[] = $payload['message'];
                 unset($payload['message']);
             }
 
-            $payload['error_description'] = implode('. ', $messages);
+            // $payload['error_description'] = implode('. ', $messages);
             $this->response->setPayload($payload);
         }
     }
