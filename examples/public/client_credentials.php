@@ -8,7 +8,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\App;
 use Zend\Diactoros\Stream;
-use DalPraS\OpenId\Server\IdTokenResponse;
+use DalPraS\OpenId\Server\ResponseTypes\IdTokenJwtResponse;
 use DalPraS\OpenId\ServerExamples\Repositories\IdentityRepository;
 use DalPraS\OpenId\ServerExamples\Repositories\ScopeRepository;
 use DalPraS\OpenId\Server\ClaimExtractor;
@@ -30,7 +30,7 @@ $app = new App([
         //$privateKey = new CryptKey('file://path/to/private.key', 'passphrase'); // if private key has a pass phrase
 
         // OpenID Response Type
-        $responseType = new IdTokenResponse(new IdentityRepository(), new ClaimExtractor());
+        $responseType = new IdTokenJwtResponse(new IdentityRepository(), new ClaimExtractor());
 
         // Setup the authorization server
         $server = new AuthorizationServer(

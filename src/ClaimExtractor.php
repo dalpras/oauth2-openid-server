@@ -4,7 +4,6 @@ namespace DalPraS\OpenId\Server;
 
 use DalPraS\OpenId\Server\Entities\ClaimSetEntity;
 use DalPraS\OpenId\Server\Entities\ClaimSetEntityInterface;
-use DalPraS\OpenId\Server\Exception\InvalidArgumentException;
 use League\OAuth2\Server\Entities\ScopeEntityInterface;
 
 /**
@@ -78,14 +77,14 @@ class ClaimExtractor
     /**
      * @param ClaimSetEntityInterface $claimSet
      * @return $this
-     * @throws InvalidArgumentException
+     * @throws \InvalidArgumentException
      */
     public function addClaimSet(ClaimSetEntityInterface $claimSet)
     {
         $scope = $claimSet->getScope();
 
         if (in_array($scope, $this->protectedClaims) && !empty($this->claimSets[$scope])) {
-            throw new InvalidArgumentException(
+            throw new \InvalidArgumentException(
                 sprintf("%s is a protected scope and is pre-defined by the OpenID specification.", $scope)
             );
         }

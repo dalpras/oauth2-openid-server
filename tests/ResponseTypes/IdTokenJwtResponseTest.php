@@ -4,7 +4,7 @@ namespace DalPraS\OpenId\Server\Test\ResponseTypes;
 
 use Lcobucci\JWT\Parser;
 use DalPraS\OpenId\Server\ClaimExtractor;
-use DalPraS\OpenId\Server\IdTokenResponse;
+use DalPraS\OpenId\Server\ResponseTypes\IdTokenJwtResponse;
 use DalPraS\OpenId\Server\Test\Stubs\IdentityProvider;
 use PHPUnit\Framework\TestCase;
 use League\OAuth2\Server\AuthorizationValidators\BearerTokenValidator;
@@ -21,11 +21,11 @@ use Psr\Http\Message\ResponseInterface;
 use Zend\Diactoros\Response;
 use Zend\Diactoros\ServerRequest;
 
-class IdTokenResponseTest extends TestCase
+class IdTokenJwtResponseTest extends TestCase
 {
     public function testGeneratesDefaultHttpResponse()
     {
-        $responseType = new IdTokenResponse(new IdentityProvider(), new ClaimExtractor());
+        $responseType = new IdTokenJwtResponse(new IdentityProvider(), new ClaimExtractor());
         $response = $this->processResponseType($responseType);
 
         $this->assertInstanceOf(ResponseInterface::class, $response);
@@ -44,7 +44,7 @@ class IdTokenResponseTest extends TestCase
 
     public function testOpenIDHttpResponse()
     {
-        $responseType = new IdTokenResponse(new IdentityProvider(), new ClaimExtractor());
+        $responseType = new IdTokenJwtResponse(new IdentityProvider(), new ClaimExtractor());
         $response = $this->processResponseType($responseType, ['openid']);
 
         $this->assertInstanceOf(ResponseInterface::class, $response);
@@ -69,7 +69,7 @@ class IdTokenResponseTest extends TestCase
         $this->expectException(\RuntimeException::class);
 
         $_SERVER['HTTP_HOST'] = 'https://localhost';
-        $responseType = new IdTokenResponse(
+        $responseType = new IdTokenJwtResponse(
             new IdentityProvider(IdentityProvider::NO_CLAIMSET),
             new ClaimExtractor()
         );
@@ -81,7 +81,7 @@ class IdTokenResponseTest extends TestCase
     public function testThrowsRuntimeExceptionWhenMissingIdentifierSetInterface()
     {
         $this->expectException(\RuntimeException::class);
-        $responseType = new IdTokenResponse(
+        $responseType = new IdTokenJwtResponse(
             new IdentityProvider(IdentityProvider::NO_IDENTIFIER),
             new ClaimExtractor()
         );
@@ -91,7 +91,7 @@ class IdTokenResponseTest extends TestCase
 
     public function testClaimsGetExtractedFromUserEntity()
     {
-        $responseType = new IdTokenResponse(new IdentityProvider(), new ClaimExtractor());
+        $responseType = new IdTokenJwtResponse(new IdentityProvider(), new ClaimExtractor());
         $response = $this->processResponseType($responseType, ['openid', 'email']);
 
         $this->assertInstanceOf(ResponseInterface::class, $response);

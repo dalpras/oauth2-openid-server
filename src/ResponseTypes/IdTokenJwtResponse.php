@@ -1,22 +1,22 @@
 <?php
 
-namespace DalPraS\OpenId\Server;
+namespace DalPraS\OpenId\Server\ResponseTypes;
 
-use DalPraS\OpenId\Server\Repositories\IdentityProviderInterface;
+use DalPraS\OpenId\Server\ClaimExtractor;
 use DalPraS\OpenId\Server\Entities\ClaimSetInterface;
-use League\OAuth2\Server\Entities\UserEntityInterface;
-use League\OAuth2\Server\Entities\AccessTokenEntityInterface;
-use League\OAuth2\Server\Entities\ScopeEntityInterface;
-use League\OAuth2\Server\ResponseTypes\BearerTokenResponse;
+use DalPraS\OpenId\Server\Repositories\IdentityProviderInterface;
+use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\Signer\Key;
 use Lcobucci\JWT\Signer\Rsa\Sha256;
-use Lcobucci\JWT\Builder;
+use League\OAuth2\Server\Entities\AccessTokenEntityInterface;
+use League\OAuth2\Server\Entities\UserEntityInterface;
+use League\OAuth2\Server\ResponseTypes\BearerTokenResponse;
 
 /**
  * Extends the BearerTokenResponse for adding
  * the param tokenId needed in OpenId.
  */
-class IdTokenResponse extends BearerTokenResponse
+class IdTokenJwtResponse extends BearerTokenResponse
 {
     /**
      * @var IdentityProviderInterface

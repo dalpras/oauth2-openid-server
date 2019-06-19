@@ -1,8 +1,8 @@
 <?php
 namespace DalPraS\OpenId\Server\Grant;
 
-use League\OAuth2\Server\Exception\OAuthServerException;
 use League\OAuth2\Server\Entities\ScopeEntityInterface;
+use League\OAuth2\Server\Exception\OAuthServerException;
 
 /**
  * Override for fixing method with php7.2

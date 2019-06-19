@@ -10,7 +10,7 @@ use OAuth2ServerExamples\Repositories\UserRepository;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\App;
-use DalPraS\OpenId\Server\IdTokenResponse;
+use DalPraS\OpenId\Server\ResponseTypes\IdTokenJwtResponse;
 use DalPraS\OpenId\ServerExamples\Repositories\IdentityRepository;
 use DalPraS\OpenId\ServerExamples\Repositories\ScopeRepository;
 use DalPraS\OpenId\Server\ClaimExtractor;
@@ -21,7 +21,7 @@ $app = new App([
     // Add the authorization server to the DI container
     AuthorizationServer::class => function () {
         // OpenID Response Type
-        $responseType = new IdTokenResponse(new IdentityRepository(), new ClaimExtractor());
+        $responseType = new IdTokenJwtResponse(new IdentityRepository(), new ClaimExtractor());
 
         // Setup the authorization server
         $server = new AuthorizationServer(
