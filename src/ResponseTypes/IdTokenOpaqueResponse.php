@@ -23,8 +23,6 @@ class IdTokenOpaqueResponse extends IdTokenJwtResponse
     {
         $expireDateTime = $this->accessToken->getExpiryDateTime()->getTimestamp();
         
-//         $jwtAccessToken = $this->accessToken->convertToJWT($this->privateKey);
-        
         $responseParams = [
             'token_type'   => 'Bearer',
             'expires_in'   => $expireDateTime - (new \DateTime())->getTimestamp(),
