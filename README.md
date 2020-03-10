@@ -6,8 +6,8 @@ This extended library now is able to use JWT access_tokens and Opaque access_tok
 
 ## Requirements
 
-* Requires PHP version 7.0 or greater.
-* [league/oauth2-server](https://github.com/thephpleague/oauth2-server) 5.1 or greater.
+* Requires PHP version 7.2 or greater.
+* [league/oauth2-server](https://github.com/thephpleague/oauth2-server) 7.4 or greater.
 
 ## Usage
 
@@ -25,11 +25,11 @@ The following classes will need to be configured and passed to the Authorization
 3. ClaimExtractor.  
    The ClaimExtractor takes an array of ClaimSets and in addition provides default claims for the OpenID specified scopes of: profile, email, phone and address.
 
-4. IdTokenJwtResponse.  
+4. OidcJwtResponse.  
    This class must be passed to the AuthorizationServer during construction and is responsible for adding the id_token to the response.
    The access_token is formatted as a Json Web Token (data is inside signed and encripted inside the token).
 
-5. IdTokenOpaqueResponse.  
+5. OidcOpaqueResponse.  
    This class must be passed to the AuthorizationServer during construction and is responsible for adding the id_token to the response.
    The access_token is formatted as Opaque (data is not stored inside the access_token).
 
@@ -50,7 +50,7 @@ $privateKeyPath = 'file://' . __DIR__ . '/../private.key';
 $publicKeyPath = 'file://' . __DIR__ . '/../public.key';
 
 // OpenID Response Type
-$responseType = new IdTokenJwtResponse(new IdentityRepository(), new ClaimExtractor());
+$responseType = new OidcJwtResponse(new IdentityRepository(), new ClaimExtractor());
 
 // Setup the authorization server
 $server = new \League\OAuth2\Server\AuthorizationServer(
@@ -62,7 +62,7 @@ $server = new \League\OAuth2\Server\AuthorizationServer(
     $responseType
 );
 
-$grant = new \DalPraS\OpenId\Server\Grant\AuthCodeGrant($authCodeRepository, $refreshTokenRepository,
+$grant = new \DalPraS\OpenId\Server\Grant\OidcAuthCodeGrant($authCodeRepository, $refreshTokenRepository,
             new \DateInterval(self::TTL_AUTH_CODE));
 
 
@@ -113,9 +113,9 @@ For an access_token endpoint is possible to use the middlewares:
 
     // OpenID Response Type instead of Bearer
     if ($useJwt) {
-        $responseType = new IdTokenJwtResponse($userRepo, $claimExtractor);
+        $responseType = new OidcJwtResponse($userRepo, $claimExtractor);
     } else {
-        $responseType = new IdTokenOpaqueResponse($userRepo, $claimExtractor);
+        $responseType = new OidcOpaqueResponse($userRepo, $claimExtractor);
     }
 
     // Setup the authorization server
@@ -213,6 +213,8 @@ Via Composer
 ```
 
 ## Testing
+
+Sorry, didnt' have time for writing generic tests ...
 
 To run the unit tests you will need to require league/oauth2-server from the source as this repository utilizes some of their existing test infrastructure.
 

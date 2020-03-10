@@ -10,12 +10,14 @@ use League\OAuth2\Server\Entities\RefreshTokenEntityInterface;
  * Extends the BearerTokenResponse for adding
  * the param tokenId needed in OpenId.
  */
-class IdTokenOpaqueResponse extends IdTokenJwtResponse
+class OidcOpaqueResponse extends OidcJwtResponse
 {
 
     /**
      * The id_token is a jwt, but access_token not.
      * We need to drop all information from the access_token to keep it compact.
+     * 
+     * @todo rivedere completamente l'uso di questo token usato per tuya
      * 
      * {@inheritdoc}
      */

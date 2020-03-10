@@ -1,6 +1,21 @@
 # Changelog
 All Notable changes to `oauth2-openid-server` will be documented in this file
 
+## v3.0 - 2020-03-10
+
+Introducing "nonce" param as defined in OpenId specifications. The class have been refactored for better readability.
+
+### Refactored
+
+- Grant\OidcAuthCodeGrant instead of Grant\AuthCodeGrant
+- ResponseTypes\OidcJwtResponse instead of ResponseTypes\IdTokenJwtResponse  
+- ResponseTypes\OidcOpaqueResponse instead of ResponseTypes\IdTokenOpaqueResponse
+
+### Added
+
+- RequestTypes\OidcAuthorizationRequest for managing "nonce"
+- Now ResponseTypes support Lcobucci\JWT v4
+
 ## v2.0 - 2019-06-19
 
 Now there are `token opaque` and `token jwt` for different kind of services. 

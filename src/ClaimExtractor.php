@@ -20,6 +20,9 @@ class ClaimExtractor
     protected $claimSets = [];
 
     /**
+     * These claims cannot be used for user purposes. 
+     * They are valorized by default.
+     * 
      * @var array
      */
     protected $protectedClaims = ['openid', 'profile', 'email', 'address', 'phone'];
@@ -136,15 +139,16 @@ class ClaimExtractor
                 continue;
             }
 
-            $intersected = array_intersect($claimSet->getClaims(), $keys);
+            // get the claims that are only allowed by the scope
+            $common = array_intersect($claimSet->getClaims(), $keys);
 
-            if (empty($intersected)) {
+            if (empty($common)) {
                 continue;
             }
 
             $data = array_filter($claims,
-                function($key) use ($intersected) {
-                    return in_array($key, $intersected);
+                function($key) use ($common) {
+                    return in_array($key, $common);
                 },
                 ARRAY_FILTER_USE_KEY
             );
