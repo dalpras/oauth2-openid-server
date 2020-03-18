@@ -45,7 +45,7 @@ class OidcAuthCodeGrant extends AbstractAuthorizeGrant
      * @param RefreshTokenRepositoryInterface $refreshTokenRepository
      * @param DateInterval                    $authCodeTTL
      *
-     * @throws Exception
+     * @throws \Exception
      */
     public function __construct(
         AuthCodeRepositoryInterface $authCodeRepository,
@@ -180,7 +180,7 @@ class OidcAuthCodeGrant extends AbstractAuthorizeGrant
      *
      * @see \League\OAuth2\Server\Grant\AuthCodeGrant::validateAuthorizationCode()
      *
-     * @param stdClass               $authCodePayload
+     * @param \stdClass               $authCodePayload
      * @param ClientEntityInterface  $client
      * @param ServerRequestInterface $request
      */

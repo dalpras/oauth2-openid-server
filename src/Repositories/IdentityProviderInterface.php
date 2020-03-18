@@ -12,7 +12,7 @@ interface IdentityProviderInterface extends RepositoryInterface
      *
      * @param mixed $identifier
      *
-     * @return UserEntityInterface
+     * @return \DalPraS\OpenId\Server\Entities\UserEntityInterface 
      */
     public function getUserEntityByIdentifier($identifier);
 }

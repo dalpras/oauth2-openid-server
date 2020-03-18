@@ -3,7 +3,6 @@
 namespace DalPraS\OpenId\Server\ResponseTypes;
 
 use DalPraS\OpenId\Server\ClaimExtractor;
-use DalPraS\OpenId\Server\Entities\ClaimSetInterface;
 use DalPraS\OpenId\Server\Repositories\IdentityProviderInterface;
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\Signer\Key;
@@ -119,7 +118,7 @@ class OidcJwtResponse extends BearerTokenResponse
     /**
      * Verify scope and make sure openid exists.
      *
-     * @param ScopeEntityInterface[] $scopes
+     * @param \League\OAuth2\Server\Entities\ScopeEntityInterface[] $scopes
      * @return bool
      */
     private function isOidcRequest($scopes) {
