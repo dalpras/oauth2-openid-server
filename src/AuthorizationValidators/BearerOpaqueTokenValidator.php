@@ -37,7 +37,7 @@ class BearerOpaqueTokenValidator implements AuthorizationValidatorInterface
                 throw OAuthServerException::accessDenied('Access token has been revoked');
             }
     
-            /* @var $accessToken \Vimar\OauthBundle\Model\AccessTokenEntity */
+            /* @var $accessToken \DalPraS\OpenId\Server\Entities\AccessTokenEntityInterface */
             $accessToken = $this->accessTokenRepository->getAccessTokenByIdentifier($jti);
             
             $client = $accessToken->getClient();
