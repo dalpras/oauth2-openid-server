@@ -14,7 +14,7 @@ interface AccessTokenProviderInterface extends AccessTokenRepositoryInterface
      *
      * @param mixed $tokenId
      *
-     * @return \DalPraS\OpenId\Server\Entities\AccessTokenEntityInterface
+     * @return \League\OAuth2\Server\Entities\AccessTokenEntityInterface
      */
     public function getAccessTokenByIdentifier($tokenId);
 }

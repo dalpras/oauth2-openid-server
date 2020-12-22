@@ -1,6 +1,15 @@
 # Changelog
 All Notable changes to `oauth2-openid-server` will be documented in this file
 
+## v4.0 - 2020-12-14
+
+Upgraded `league/oauth2-server` version 8.
+
+### Removed
+
+- ResponseTypes/OidcOpaqueResponse.php
+- AuthorizationValidators/BearerOpaqueTokenValidator.php
+
 ## v3.0 - 2020-03-10
 
 Introducing "nonce" param as defined in OpenId specifications. The class have been refactored for better readability.

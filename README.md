@@ -2,7 +2,6 @@
 
 This implements the OpenID specification on top of The PHP League's [OAuth2 Server](https://github.com/thephpleague/oauth2-server).  
 This library is based on the work of [OAuth 2.0 OpenID Server](https://github.com/steverhoades/oauth2-openid-connect-client).  
-This extended library now is able to use JWT access_tokens and Opaque access_tokens for services that have restrinctions in access_token size.  
 
 ## Requirements
 
@@ -28,10 +27,6 @@ The following classes will need to be configured and passed to the Authorization
 4. OidcJwtResponse.  
    This class must be passed to the AuthorizationServer during construction and is responsible for adding the id_token to the response.
    The access_token is formatted as a Json Web Token (data is inside signed and encripted inside the token).
-
-5. OidcOpaqueResponse.  
-   This class must be passed to the AuthorizationServer during construction and is responsible for adding the id_token to the response.
-   The access_token is formatted as Opaque (data is not stored inside the access_token).
 
 6. ScopeRepository.  
    The getScopeEntityByIdentifier($identifier) method must return a ScopeEntity for the `openid` scope in order to enable support. See examples.
@@ -111,12 +106,8 @@ For an access_token endpoint is possible to use the middlewares:
 
     $claimExtractor = new \DalPraS\OpenId\Server\ClaimExtractor();
 
-    // OpenID Response Type instead of Bearer
-    if ($useJwt) {
-        $responseType = new OidcJwtResponse($userRepo, $claimExtractor);
-    } else {
-        $responseType = new OidcOpaqueResponse($userRepo, $claimExtractor);
-    }
+    // OpenID Response
+    $responseType = new OidcJwtResponse($userRepo, $claimExtractor);
 
     // Setup the authorization server
     $authServer = new \League\OAuth2\Server\AuthorizationServer(

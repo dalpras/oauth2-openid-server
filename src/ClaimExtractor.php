@@ -36,7 +36,11 @@ class ClaimExtractor
     {
         // Add Default OpenID Claims
         // @see http://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
-        $this->addClaimSet(new ClaimSetEntity('openid', ['sub']));
+        $this->addClaimSet(
+            new ClaimSetEntity('openid', [
+                'sub'
+            ])
+        );
 
         $this->addClaimSet(
             new ClaimSetEntity('profile', [

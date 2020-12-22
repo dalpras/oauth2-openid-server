@@ -10,6 +10,9 @@ use Lcobucci\JWT\Signer\Rsa\Sha256;
 use League\OAuth2\Server\Entities\AccessTokenEntityInterface;
 use League\OAuth2\Server\ResponseTypes\BearerTokenResponse;
 use DalPraS\OpenId\Server\Entities\UserEntityInterface;
+use Lcobucci\JWT\Configuration;
+use Lcobucci\JWT\Signer\Key\LocalFileReference;
+use Lcobucci\JWT\Signer\Key\InMemory;
 
 /**
  * Extends the BearerTokenResponse for adding
@@ -20,17 +23,22 @@ class OidcJwtResponse extends BearerTokenResponse
     /**
      * @var IdentityProviderInterface
      */
-    protected $identityProvider;
+    private $identityProvider;
 
     /**
      * @var ClaimExtractor
      */
-    protected $claimExtractor;
+    private $claimExtractor;
     
     /**
      * @var string
      */
-    protected $nonce;
+    private $nonce;
+    
+    /**
+     * @var Configuration
+     */
+    private $jwtConfiguration;
     
     public function __construct(IdentityProviderInterface $identityProvider, ClaimExtractor $claimExtractor) {
         $this->identityProvider = $identityProvider;
@@ -54,22 +62,47 @@ class OidcJwtResponse extends BearerTokenResponse
     }
 
     /**
+     * Initialise the JWT Configuration.
+     */
+    public function initJwtConfiguration()
+    {
+        $this->jwtConfiguration = Configuration::forAsymmetricSigner(
+            new Sha256(),
+            LocalFileReference::file($this->privateKey->getKeyPath(), $this->privateKey->getPassPhrase() ?? ''),
+            InMemory::plainText('')
+        );
+    }
+    
+    /**
      * Get Lcobucci Builder
      * 
      * @param AccessTokenEntityInterface $accessToken
      * @param UserEntityInterface $userEntity
      * @return \Lcobucci\JWT\Builder
      */
-    protected function getBuilder(AccessTokenEntityInterface $accessToken, UserEntityInterface $userEntity) {
-        $builder = new Builder();
-        // Add required id_token claims
-        $builder->permittedFor($accessToken->getClient()->getIdentifier())
-                ->issuedBy('https://' . $_SERVER['HTTP_HOST'])
-                ->issuedAt(time())
-                ->expiresAt($accessToken->getExpiryDateTime()->getTimestamp())
-                ->relatedTo($userEntity->getIdentifier())
+    private function getJwtBuilder(AccessTokenEntityInterface $accessToken, UserEntityInterface $userEntity) {
+        $this->initJwtConfiguration();
+        
+        return $this->jwtConfiguration->builder()
+            ->permittedFor($accessToken->getClient()->getIdentifier())
+            ->issuedBy('https://' . $_SERVER['HTTP_HOST'])
+//             ->identifiedBy($accessToken->getIdentifier())
+            ->issuedAt(new \DateTimeImmutable())
+//             ->canOnlyBeUsedAfter(new \DateTimeImmutable())
+            ->expiresAt($accessToken->getExpiryDateTime())
+            ->relatedTo((string) $userEntity->getIdentifier())
+            // ->withClaim('scopes', $this->getScopes())
+            // ->getToken($this->jwtConfiguration->signer(), $this->jwtConfiguration->signingKey())
         ;
-        return $builder;
+        
+//         $builder = new Builder();
+//         $builder->permittedFor($accessToken->getClient()->getIdentifier())
+//                 ->issuedBy('https://' . $_SERVER['HTTP_HOST'])
+//                 ->issuedAt(time())
+//                 ->expiresAt($accessToken->getExpiryDateTime()->getTimestamp())
+//                 ->relatedTo($userEntity->getIdentifier())
+//         ;
+//         return $builder;
     }
 
     /**
@@ -99,7 +132,7 @@ class OidcJwtResponse extends BearerTokenResponse
         }
 
         // Add required id_token claims
-        $builder = $this->getBuilder($accessToken, $userEntity);
+        $builder = $this->getJwtBuilder($accessToken, $userEntity);
 
         foreach ($claims as $claimName => $claimValue) {
             $builder->withClaim($claimName, $claimValue);
@@ -108,7 +141,8 @@ class OidcJwtResponse extends BearerTokenResponse
             $builder->withClaim('nonce', $nonce);
         }
 
-        $token = $builder->getToken(new Sha256(), new Key($this->privateKey->getKeyPath(), $this->privateKey->getPassPhrase()));
+        $token = $builder->getToken($this->jwtConfiguration->signer(), $this->jwtConfiguration->signingKey());
+//         $token = $builder->getToken(new Sha256(), new Key($this->privateKey->getKeyPath(), $this->privateKey->getPassPhrase()));
 
         return [
             'id_token' => (string) $token
