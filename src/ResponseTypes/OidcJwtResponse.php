@@ -86,23 +86,10 @@ class OidcJwtResponse extends BearerTokenResponse
         return $this->jwtConfiguration->builder()
             ->permittedFor($accessToken->getClient()->getIdentifier())
             ->issuedBy('https://' . $_SERVER['HTTP_HOST'])
-//             ->identifiedBy($accessToken->getIdentifier())
             ->issuedAt(new \DateTimeImmutable())
-//             ->canOnlyBeUsedAfter(new \DateTimeImmutable())
             ->expiresAt($accessToken->getExpiryDateTime())
             ->relatedTo((string) $userEntity->getIdentifier())
-            // ->withClaim('scopes', $this->getScopes())
-            // ->getToken($this->jwtConfiguration->signer(), $this->jwtConfiguration->signingKey())
         ;
-        
-//         $builder = new Builder();
-//         $builder->permittedFor($accessToken->getClient()->getIdentifier())
-//                 ->issuedBy('https://' . $_SERVER['HTTP_HOST'])
-//                 ->issuedAt(time())
-//                 ->expiresAt($accessToken->getExpiryDateTime()->getTimestamp())
-//                 ->relatedTo($userEntity->getIdentifier())
-//         ;
-//         return $builder;
     }
 
     /**
