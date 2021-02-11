@@ -13,6 +13,7 @@ use DalPraS\OpenId\Server\Entities\UserEntityInterface;
 use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Signer\Key\LocalFileReference;
 use Lcobucci\JWT\Signer\Key\InMemory;
+use DalPraS\OpenId\Server\JwtBuilder;
 
 /**
  * Extends the BearerTokenResponse for adding
@@ -46,14 +47,6 @@ class OidcJwtResponse extends BearerTokenResponse
     }
     
     /**
-     * @return string
-     */
-    public function getNonce()
-    {
-        return $this->nonce;
-    }
-
-    /**
      * @param string $nonce
      */
     public function setNonce($nonce)
@@ -64,26 +57,30 @@ class OidcJwtResponse extends BearerTokenResponse
     /**
      * Initialise the JWT Configuration.
      */
-    public function initJwtConfiguration()
+    public function getJwtConfiguration()
     {
-        $this->jwtConfiguration = Configuration::forAsymmetricSigner(
-            new Sha256(),
-            LocalFileReference::file($this->privateKey->getKeyPath(), $this->privateKey->getPassPhrase() ?? ''),
-            InMemory::plainText('')
-        );
+        if ($this->jwtConfiguration === null) {
+            $this->jwtConfiguration = Configuration::forAsymmetricSigner(
+                new Sha256(),
+                LocalFileReference::file($this->privateKey->getKeyPath(), $this->privateKey->getPassPhrase() ?? ''),
+                InMemory::plainText('')
+            );
+            $this->jwtConfiguration->setBuilderFactory(static function() {
+                return new \DalPraS\OpenId\Server\JwtBuilder();
+            });
+        }
+        return $this->jwtConfiguration;
     }
     
     /**
-     * Get Lcobucci Builder
+     * Get Custom Builder
      * 
      * @param AccessTokenEntityInterface $accessToken
      * @param UserEntityInterface $userEntity
-     * @return \Lcobucci\JWT\Builder
+     * @return JwtBuilder
      */
     private function getJwtBuilder(AccessTokenEntityInterface $accessToken, UserEntityInterface $userEntity) {
-        $this->initJwtConfiguration();
-        
-        return $this->jwtConfiguration->builder()
+        return $this->getJwtConfiguration()->builder()
             ->permittedFor($accessToken->getClient()->getIdentifier())
             ->issuedBy('https://' . $_SERVER['HTTP_HOST'])
             ->issuedAt(new \DateTimeImmutable())
@@ -102,7 +99,7 @@ class OidcJwtResponse extends BearerTokenResponse
             return [];
         }
 
-        /** @var \League\OAuth2\Server\Entities\UserEntityInterface $userEntity */
+        /* @var \League\OAuth2\Server\Entities\UserEntityInterface $userEntity */
         $userEntity = $this->identityProvider->getUserEntityByIdentifier($accessToken->getUserIdentifier());
 
         switch (false) {
@@ -121,16 +118,16 @@ class OidcJwtResponse extends BearerTokenResponse
         // Add required id_token claims
         $builder = $this->getJwtBuilder($accessToken, $userEntity);
 
-        foreach ($claims as $claimName => $claimValue) {
-            $builder->withClaim($claimName, $claimValue);
+        foreach ($claims as $name => $value) {
+            $builder->setRegisteredClaim($name, $value, false);
         }
-        if ( ($nonce = $this->getNonce()) ) {
-            $builder->withClaim('nonce', $nonce);
+        
+        if ( $this->nonce ) {
+            $builder->setRegisteredClaim('nonce', $this->nonce, false);
         }
 
-        $token = $builder->getToken($this->jwtConfiguration->signer(), $this->jwtConfiguration->signingKey());
-//         $token = $builder->getToken(new Sha256(), new Key($this->privateKey->getKeyPath(), $this->privateKey->getPassPhrase()));
-
+        $token = $builder->getToken($this->getJwtConfiguration()->signer(), $this->getJwtConfiguration()->signingKey());
+        
         return [
             'id_token' => (string) $token
         ];
