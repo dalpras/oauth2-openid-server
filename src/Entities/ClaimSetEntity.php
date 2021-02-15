@@ -23,8 +23,9 @@ class ClaimSetEntity implements ClaimSetEntityInterface
     }
 
     /**
+     * 
      * @return string
-     * @see \DalPraS\OpenId\Server\Entities\ScopeInterface::getScope()
+     * @see \DalPraS\OpenId\Server\Entities\ClaimSetEntityInterface::getScope()
      */
     public function getScope() {
         return $this->scope;

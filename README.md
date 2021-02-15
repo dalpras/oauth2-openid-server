@@ -5,8 +5,9 @@ This library is based on the work of [OAuth 2.0 OpenID Server](https://github.co
 
 ## Requirements
 
-* Requires PHP version 7.2 or greater.
-* [league/oauth2-server](https://github.com/thephpleague/oauth2-server) 7.4 or greater.
+* Requires PHP version 7.3 or greater.
+* [league/oauth2-server](https://github.com/thephpleague/oauth2-server) 8.0 or greater.
+* [lcobucci/jwt](https://github.com/lcobucci/jwt) 4.0 or greater.
 
 ## Usage
 
@@ -22,9 +23,9 @@ The following classes will need to be configured and passed to the Authorization
    ClaimSet is a way to associate claims to a given scope.
 
 3. ClaimExtractor.  
-   The ClaimExtractor takes an array of ClaimSets and in addition provides default claims for the OpenID specified scopes of: profile, email, phone and address.
+   The ClaimExtractor is an ArrayObject of ClaimSets. You can append ClaimSet to the ArrayObject via `append` and then extract the uset claims.
 
-4. OidcJwtResponse.  
+4. OidcResponse.  
    This class must be passed to the AuthorizationServer during construction and is responsible for adding the id_token to the response.
    The access_token is formatted as a Json Web Token (data is inside signed and encripted inside the token).
 
@@ -45,7 +46,10 @@ $privateKeyPath = 'file://' . __DIR__ . '/../private.key';
 $publicKeyPath = 'file://' . __DIR__ . '/../public.key';
 
 // OpenID Response Type
-$responseType = new OidcJwtResponse(new IdentityRepository(), new ClaimExtractor());
+$oidcResponse = new OidcResponse();
+$oidcResponse->setIdentityRepository(new IdentityRepository());
+$oidcResponse->setClaimExtractor(new ClaimExtractor());
+
 
 // Setup the authorization server
 $server = new \League\OAuth2\Server\AuthorizationServer(
@@ -54,7 +58,7 @@ $server = new \League\OAuth2\Server\AuthorizationServer(
     $scopeRepository,
     $privateKey,
     $publicKey,
-    $responseType
+    $oidcResponse
 );
 
 $grant = new \DalPraS\OpenId\Server\Grant\OidcAuthCodeGrant($authCodeRepository, $refreshTokenRepository,
@@ -107,7 +111,7 @@ For an access_token endpoint is possible to use the middlewares:
     $claimExtractor = new \DalPraS\OpenId\Server\ClaimExtractor();
 
     // OpenID Response
-    $responseType = new OidcJwtResponse($userRepo, $claimExtractor);
+    $oidcResponse = new OidcResponse($userRepo, $claimExtractor);
 
     // Setup the authorization server
     $authServer = new \League\OAuth2\Server\AuthorizationServer(
@@ -116,7 +120,7 @@ For an access_token endpoint is possible to use the middlewares:
         $scopeRepo,
         $privateKeyPath,
         'XXXX_XXX_XXX_XXX_XX',
-        $responseType
+        $oidcResponse
     );
 
     // OpenID Response Type instead of Bearer
@@ -205,7 +209,7 @@ Via Composer
 
 ## Testing
 
-Sorry, didnt' have time for writing generic tests ...
+Sorry, didnt' have time for writing standalone tests ...
 
 To run the unit tests you will need to require league/oauth2-server from the source as this repository utilizes some of their existing test infrastructure.
 

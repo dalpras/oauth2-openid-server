@@ -1,6 +1,16 @@
 # Changelog
 All Notable changes to `oauth2-openid-server` will be documented in this file
 
+## v5.0 2020-02-12
+
+- Renamed OidcJwtResponse to OidcResponse
+- Dropped Entities\ScopeInterface
+- ClaimExtractor extends \ArrayObject and extract the claims specified
+- Updated dependencies to 
+	- "league/oauth2-server": "^8.2"
+	- "lcobucci/jwt": "^4.1"
+	- "php" : ">=7.3"
+
 ## v4.0 - 2020-12-14
 
 Upgraded `league/oauth2-server` version 8.
