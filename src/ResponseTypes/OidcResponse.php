@@ -13,74 +13,43 @@ use DalPraS\OpenId\Server\Entities\UserEntityInterface;
 use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Signer\Key\LocalFileReference;
 use Lcobucci\JWT\Signer\Key\InMemory;
-use DalPraS\OpenId\Server\JwtBuilder;
 
 /**
  * Extends the BearerTokenResponse for adding
  * the param tokenId needed in OpenId.
  */
-class OidcJwtResponse extends BearerTokenResponse
+class OidcResponse extends BearerTokenResponse
 {
+    
+    /**
+     * @var Configuration
+     */
+    private Configuration $jwtConfiguration;
+    
     /**
      * @var IdentityProviderInterface
      */
-    private $identityProvider;
+    private IdentityProviderInterface $identityProvider;
 
     /**
      * @var ClaimExtractor
      */
-    private $claimExtractor;
+    private ClaimExtractor $claimExtractor;
     
     /**
      * @var string
      */
     private $nonce;
-    
-    /**
-     * @var Configuration
-     */
-    private $jwtConfiguration;
-    
-    public function __construct(IdentityProviderInterface $identityProvider, ClaimExtractor $claimExtractor) {
-        $this->identityProvider = $identityProvider;
-        $this->claimExtractor   = $claimExtractor;
-    }
-    
-    /**
-     * @param string $nonce
-     */
-    public function setNonce($nonce)
-    {
-        $this->nonce = $nonce;
-    }
 
-    /**
-     * Initialise the JWT Configuration.
-     */
-    public function getJwtConfiguration()
-    {
-        if ($this->jwtConfiguration === null) {
-            $this->jwtConfiguration = Configuration::forAsymmetricSigner(
-                new Sha256(),
-                LocalFileReference::file($this->privateKey->getKeyPath(), $this->privateKey->getPassPhrase() ?? ''),
-                InMemory::plainText('')
-            );
-            $this->jwtConfiguration->setBuilderFactory(static function() {
-                return new \DalPraS\OpenId\Server\JwtBuilder();
-            });
-        }
-        return $this->jwtConfiguration;
-    }
-    
     /**
      * Get Custom Builder
      * 
      * @param AccessTokenEntityInterface $accessToken
      * @param UserEntityInterface $userEntity
-     * @return JwtBuilder
+     * @return \DalPraS\OpenId\Server\Jwt\Builder
      */
     private function getJwtBuilder(AccessTokenEntityInterface $accessToken, UserEntityInterface $userEntity) {
-        return $this->getJwtConfiguration()->builder()
+        return $this->jwtConfiguration->builder()
             ->permittedFor($accessToken->getClient()->getIdentifier())
             ->issuedBy('https://' . $_SERVER['HTTP_HOST'])
             ->issuedAt(new \DateTimeImmutable())
@@ -110,26 +79,22 @@ class OidcJwtResponse extends BearerTokenResponse
         // Need a claim factory here to reduce the number of claims by provided scope.
         $claims = $this->claimExtractor->extract($accessToken->getScopes(), $userEntity->getClaims());
 
-        // check 'sub' has a value
-        if (empty($claims['sub'])) {
-            throw new \RuntimeException('UserEntity must set the value of "sub" claim');
-        }
-
         // Add required id_token claims
+        /* @var $builder \Lcobucci\JWT\Token\Builder */
         $builder = $this->getJwtBuilder($accessToken, $userEntity);
 
         foreach ($claims as $name => $value) {
-            $builder->setRegisteredClaim($name, $value, false);
+            $builder->withClaim($name, $value);
         }
         
         if ( $this->nonce ) {
-            $builder->setRegisteredClaim('nonce', $this->nonce, false);
+            $builder->withClaim('nonce', $this->nonce);
         }
 
-        $token = $builder->getToken($this->getJwtConfiguration()->signer(), $this->getJwtConfiguration()->signingKey());
+        $token = $builder->getToken($this->jwtConfiguration->signer(), $this->jwtConfiguration->signingKey());
         
         return [
-            'id_token' => (string) $token
+            'id_token' => $token->toString()
         ];
     }
 
@@ -146,6 +111,50 @@ class OidcJwtResponse extends BearerTokenResponse
             }
         }
         return false;
+    }
+    
+    /**
+     * 
+     * @param unknown $identityProvider
+     * @return \DalPraS\OpenId\Server\ResponseTypes\OidcResponse
+     */
+    public function setIdentityProvider($identityProvider)
+    {
+        $this->identityProvider = $identityProvider;
+        return $this;
+    }
+
+    /**
+     * 
+     * @param unknown $claimExtractor
+     * @return \DalPraS\OpenId\Server\ResponseTypes\OidcResponse
+     */
+    public function setClaimExtractor($claimExtractor)
+    {
+        $this->claimExtractor = $claimExtractor;
+        return $this;
+    }
+
+    /**
+     * 
+     * @param unknown $nonce
+     * @return \DalPraS\OpenId\Server\ResponseTypes\OidcResponse
+     */
+    public function setNonce($nonce)
+    {
+        $this->nonce = $nonce;
+        return $this;
+    }
+
+
+    /**
+     * @param unknown $jwtConfiguration
+     * @return \DalPraS\OpenId\Server\ResponseTypes\OidcResponse
+     */
+    public function setJwtConfiguration($jwtConfiguration)
+    {
+        $this->jwtConfiguration = $jwtConfiguration;
+        return $this;
     }
 
 }

@@ -30,6 +30,10 @@ use stdClass;
 use DalPraS\OpenId\Server\RequestTypes\OidcAuthorizationRequest;
 use League\OAuth2\Server\Grant\AbstractAuthorizeGrant;
 
+/**
+ * Using the code of \League\OAuth2\Server\Grant\AuthCodeGrant.
+ * The code modify the behavior for dealing with "nonce" parameter needed in OIDC 
+ */
 class OidcAuthCodeGrant extends AbstractAuthorizeGrant
 {
     /**
@@ -162,7 +166,7 @@ class OidcAuthCodeGrant extends AbstractAuthorizeGrant
             }
         }
 
-        /* @var $responseType \DalPraS\OpenId\Server\ResponseTypes\OidcJwtResponse */
+        /* @var $responseType \DalPraS\OpenId\Server\ResponseTypes\OidcResponse */
 
         // Issue and persist new access token
         $accessToken = $this->issueAccessToken($accessTokenTTL, $client, $authCodePayload->user_id, $scopes);
