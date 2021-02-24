@@ -13,6 +13,7 @@ use DalPraS\OpenId\Server\Entities\UserEntityInterface;
 use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Signer\Key\LocalFileReference;
 use Lcobucci\JWT\Signer\Key\InMemory;
+use Lcobucci\JWT\Encoding\ChainedFormatter;
 
 /**
  * Extends the BearerTokenResponse for adding
@@ -42,22 +43,20 @@ class OidcResponse extends BearerTokenResponse
     private $nonce;
 
     /**
-     * Get Custom Builder
-     * 
-     * @param AccessTokenEntityInterface $accessToken
-     * @param UserEntityInterface $userEntity
-     * @return \DalPraS\OpenId\Server\Jwt\Builder
+     * @param Configuration $jwtConfiguration
+     * @param ClaimExtractor $claimExtractor
+     * @param IdentityProviderInterface $identityProvider
      */
-    private function getJwtBuilder(AccessTokenEntityInterface $accessToken, UserEntityInterface $userEntity) {
-        return $this->jwtConfiguration->builder()
-            ->permittedFor($accessToken->getClient()->getIdentifier())
-            ->issuedBy('https://' . $_SERVER['HTTP_HOST'])
-            ->issuedAt(new \DateTimeImmutable())
-            ->expiresAt($accessToken->getExpiryDateTime())
-            ->relatedTo((string) $userEntity->getIdentifier())
-        ;
+    public function __construct(
+        Configuration $jwtConfiguration, 
+        ClaimExtractor $claimExtractor,
+        IdentityProviderInterface $identityProvider
+    ) {
+        $this->jwtConfiguration    = $jwtConfiguration;
+        $this->identityProvider = $identityProvider;
+        $this->claimExtractor   = $claimExtractor;
     }
-
+    
     /**
      * @param AccessTokenEntityInterface $accessToken
      * @return array
@@ -81,8 +80,14 @@ class OidcResponse extends BearerTokenResponse
 
         // Add required id_token claims
         /* @var $builder \Lcobucci\JWT\Token\Builder */
-        $builder = $this->getJwtBuilder($accessToken, $userEntity);
-
+        $builder = $this->jwtConfiguration->builder(ChainedFormatter::withUnixTimestampDates())
+            ->permittedFor($accessToken->getClient()->getIdentifier())
+            ->issuedBy('https://' . $_SERVER['HTTP_HOST'])
+            ->issuedAt(new \DateTimeImmutable())
+            ->expiresAt($accessToken->getExpiryDateTime())
+            ->relatedTo((string) $userEntity->getIdentifier())
+        ;
+        
         foreach ($claims as $name => $value) {
             $builder->withClaim($name, $value);
         }
@@ -114,31 +119,8 @@ class OidcResponse extends BearerTokenResponse
     }
     
     /**
-     * 
-     * @param unknown $identityProvider
-     * @return \DalPraS\OpenId\Server\ResponseTypes\OidcResponse
-     */
-    public function setIdentityProvider($identityProvider)
-    {
-        $this->identityProvider = $identityProvider;
-        return $this;
-    }
-
-    /**
-     * 
-     * @param unknown $claimExtractor
-     * @return \DalPraS\OpenId\Server\ResponseTypes\OidcResponse
-     */
-    public function setClaimExtractor($claimExtractor)
-    {
-        $this->claimExtractor = $claimExtractor;
-        return $this;
-    }
-
-    /**
-     * 
-     * @param unknown $nonce
-     * @return \DalPraS\OpenId\Server\ResponseTypes\OidcResponse
+     * @param string $nonce
+     * @return OidcResponse;
      */
     public function setNonce($nonce)
     {
@@ -146,15 +128,5 @@ class OidcResponse extends BearerTokenResponse
         return $this;
     }
 
-
-    /**
-     * @param unknown $jwtConfiguration
-     * @return \DalPraS\OpenId\Server\ResponseTypes\OidcResponse
-     */
-    public function setJwtConfiguration($jwtConfiguration)
-    {
-        $this->jwtConfiguration = $jwtConfiguration;
-        return $this;
-    }
-
+    
 }
