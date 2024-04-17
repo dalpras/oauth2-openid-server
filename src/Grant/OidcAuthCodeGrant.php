@@ -1,34 +1,35 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @author      Stefano Dal Prà
  * @copyright   Copyright (c) Stefano Dal Prà
  * @license     http://mit-license.org/
- *
  * @link        https://github.com/dalpras/oauth2-openid-server
  */
 
 namespace DalPraS\OpenId\Server\Grant;
 
-use DateInterval;
-use DateTimeImmutable;
+use stdClass;
 use Exception;
-use League\OAuth2\Server\CodeChallengeVerifiers\CodeChallengeVerifierInterface;
-use League\OAuth2\Server\CodeChallengeVerifiers\PlainVerifier;
-use League\OAuth2\Server\CodeChallengeVerifiers\S256Verifier;
-use League\OAuth2\Server\Entities\ClientEntityInterface;
+use DateInterval;
+use LogicException;
+use DateTimeImmutable;
+use League\OAuth2\Server\RequestEvent;
+use Psr\Http\Message\ServerRequestInterface;
+use League\OAuth2\Server\RequestAccessTokenEvent;
+use League\OAuth2\Server\RequestRefreshTokenEvent;
+use DalPraS\OpenId\Server\ResponseTypes\OidcResponse;
 use League\OAuth2\Server\Entities\UserEntityInterface;
+use League\OAuth2\Server\Grant\AbstractAuthorizeGrant;
+use League\OAuth2\Server\Entities\ClientEntityInterface;
 use League\OAuth2\Server\Exception\OAuthServerException;
+use League\OAuth2\Server\ResponseTypes\RedirectResponse;
+use League\OAuth2\Server\RequestTypes\AuthorizationRequest;
+use League\OAuth2\Server\CodeChallengeVerifiers\S256Verifier;
+use League\OAuth2\Server\ResponseTypes\ResponseTypeInterface;
+use League\OAuth2\Server\CodeChallengeVerifiers\PlainVerifier;
+use DalPraS\OpenId\Server\RequestTypes\OidcAuthorizationRequest;
 use League\OAuth2\Server\Repositories\AuthCodeRepositoryInterface;
 use League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface;
-use League\OAuth2\Server\RequestEvent;
-use League\OAuth2\Server\RequestTypes\AuthorizationRequest;
-use League\OAuth2\Server\ResponseTypes\RedirectResponse;
-use League\OAuth2\Server\ResponseTypes\ResponseTypeInterface;
-use LogicException;
-use Psr\Http\Message\ServerRequestInterface;
-use stdClass;
-use DalPraS\OpenId\Server\RequestTypes\OidcAuthorizationRequest;
-use League\OAuth2\Server\Grant\AbstractAuthorizeGrant;
 
 /**
  * Using the code of \League\OAuth2\Server\Grant\AuthCodeGrant.
@@ -87,7 +88,7 @@ class OidcAuthCodeGrant extends AbstractAuthorizeGrant
 
     /**
      * Respond to an access token request.
-     *
+     * 
      * @param ServerRequestInterface $request
      * @param ResponseTypeInterface  $responseType
      * @param DateInterval           $accessTokenTTL
@@ -101,6 +102,9 @@ class OidcAuthCodeGrant extends AbstractAuthorizeGrant
         ResponseTypeInterface $responseType,
         DateInterval $accessTokenTTL
     ) {
+        if (! $responseType instanceof OidcResponse) {
+            throw OAuthServerException::invalidRequest('responseType');
+        }
         list($clientId) = $this->getClientCredentials($request);
 
         $client = $this->getClientEntityOrFail($clientId, $request);
@@ -112,7 +116,7 @@ class OidcAuthCodeGrant extends AbstractAuthorizeGrant
 
         $encryptedAuthCode = $this->getRequestParameter('code', $request, null);
 
-        if ($encryptedAuthCode === null) {
+        if (!\is_string($encryptedAuthCode)) {
             throw OAuthServerException::invalidRequest('code');
         }
 
@@ -167,10 +171,9 @@ class OidcAuthCodeGrant extends AbstractAuthorizeGrant
         }
 
         /* @var $responseType \DalPraS\OpenId\Server\ResponseTypes\OidcResponse */
-
         // Issue and persist new access token
         $accessToken = $this->issueAccessToken($accessTokenTTL, $client, $authCodePayload->user_id, $scopes);
-        $this->getEmitter()->emit(new RequestEvent(RequestEvent::ACCESS_TOKEN_ISSUED, $request));
+        $this->getEmitter()->emit(new RequestAccessTokenEvent(RequestEvent::ACCESS_TOKEN_ISSUED, $request, $accessToken));
         $responseType->setAccessToken($accessToken);
         $responseType->setNonce($authCodePayload->nonce);
 
@@ -178,7 +181,7 @@ class OidcAuthCodeGrant extends AbstractAuthorizeGrant
         $refreshToken = $this->issueRefreshToken($accessToken);
 
         if ($refreshToken !== null) {
-            $this->getEmitter()->emit(new RequestEvent(RequestEvent::REFRESH_TOKEN_ISSUED, $request));
+            $this->getEmitter()->emit(new RequestRefreshTokenEvent(RequestEvent::REFRESH_TOKEN_ISSUED, $request, $refreshToken));
             $responseType->setRefreshToken($refreshToken);
         }
 
@@ -289,6 +292,10 @@ class OidcAuthCodeGrant extends AbstractAuthorizeGrant
         $redirectUri = $this->getQueryStringParameter('redirect_uri', $request);
 
         if ($redirectUri !== null) {
+            if (!\is_string($redirectUri)) {
+                throw OAuthServerException::invalidRequest('redirect_uri');
+            }
+
             $this->validateRedirectUri($redirectUri, $client, $request);
         } elseif (empty($client->getRedirectUri()) ||
             (\is_array($client->getRedirectUri()) && \count($client->getRedirectUri()) !== 1)) {
@@ -363,15 +370,15 @@ class OidcAuthCodeGrant extends AbstractAuthorizeGrant
      */
     public function completeAuthorizationRequest(AuthorizationRequest $authorizationRequest)
     {
-        if ($authorizationRequest instanceof OidcAuthorizationRequest === false) {
+        if (! $authorizationRequest instanceof OidcAuthorizationRequest) {
             throw new LogicException('AuthorizationRequest have to be a valid instance of OidcAuthorizationRequest');
         }
-        if ($authorizationRequest->getUser() instanceof UserEntityInterface === false) {
+        if (! $authorizationRequest->getUser() instanceof UserEntityInterface ) {
             throw new LogicException('An instance of UserEntityInterface should be set on the AuthorizationRequest');
         }
 
-        /* @var $authorizationRequest OidcAuthorizationRequest */        
-        $finalRedirectUri = $authorizationRequest->getRedirectUri()
+        /* @var \DalPraS\OpenId\Server\RequestTypes\OidcAuthorizationRequest $authorizationRequest */        
+        $finalRedirectUri = $authorizationRequest->getRedirectUri() 
                           ?? $this->getClientRedirectUri($authorizationRequest);
 
         // The user approved the client, redirect them back with an auth code
@@ -389,7 +396,7 @@ class OidcAuthCodeGrant extends AbstractAuthorizeGrant
                 'redirect_uri'          => $authCode->getRedirectUri(),
                 'auth_code_id'          => $authCode->getIdentifier(),
                 'scopes'                => $authCode->getScopes(),
-                'user_id'               => $authCode->getUserIdentifier(),
+                'user_id'               => (string) $authCode->getUserIdentifier(),
                 'expire_time'           => (new DateTimeImmutable())->add($this->authCodeTTL)->getTimestamp(),
                 'code_challenge'        => $authorizationRequest->getCodeChallenge(),
                 'code_challenge_method' => $authorizationRequest->getCodeChallengeMethod(),

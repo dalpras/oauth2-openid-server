@@ -1,9 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace DalPraS\OpenId\Server;
 
-use DalPraS\OpenId\Server\Entities\ClaimSetEntity;
-use DalPraS\OpenId\Server\Entities\ClaimSetEntityInterface;
+use ArrayObject;
 use League\OAuth2\Server\Entities\ScopeEntityInterface;
 
 /**
@@ -12,8 +11,8 @@ use League\OAuth2\Server\Entities\ScopeEntityInterface;
  * It's possible to add a custom ClaimSet and "extract" using defined scopes.
  * It's not possible to add a custom ClaimSet already present as a standard ClaimSet.
  */
-class ClaimExtractor extends \ArrayObject {
-    
+class ClaimExtractor extends ArrayObject 
+{
     /**
      * For given scopes and aggregated claims get all claims that have been configured on the extractor.
      * 
@@ -23,10 +22,10 @@ class ClaimExtractor extends \ArrayObject {
      */
     public function extract(array $userScopes, array $userClaims) {
         $claims = array_reduce($this->getArrayCopy(), function ($carry, $claimSet) use (&$userScopes, $userClaims) {
-            /* @var $scope ScopeEntityInterface */
+            /* @var $scope \League\OAuth2\Server\Entities\ScopeEntityInterface */
             foreach ($userScopes as $key => $userScope) {
                 $scopeName = ($userScope instanceof ScopeEntityInterface) ? $userScope->getIdentifier() : $userScope;
-                /* @var $claimSet ClaimSetEntityInterface */
+                /* @var $claimSet \DalPraS\OpenId\Server\Entities\ClaimSetEntityInterface */
                 if ( $scopeName === $claimSet->getScope() ) {
                     // if the userScope was matched
                     unset($userScopes[$key]);

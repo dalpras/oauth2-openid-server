@@ -1,14 +1,14 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace DalPraS\OpenId\Server\ResponseTypes;
 
-use DalPraS\OpenId\Server\ClaimExtractor;
-use DalPraS\OpenId\Server\Repositories\IdentityProviderInterface;
-use League\OAuth2\Server\Entities\AccessTokenEntityInterface;
-use League\OAuth2\Server\ResponseTypes\BearerTokenResponse;
-use DalPraS\OpenId\Server\Entities\UserEntityInterface;
 use Lcobucci\JWT\Configuration;
+use DalPraS\OpenId\Server\ClaimExtractor;
 use Lcobucci\JWT\Encoding\ChainedFormatter;
+use DalPraS\OpenId\Server\Entities\UserEntityInterface;
+use League\OAuth2\Server\ResponseTypes\BearerTokenResponse;
+use League\OAuth2\Server\Entities\AccessTokenEntityInterface;
+use DalPraS\OpenId\Server\Repositories\IdentityProviderInterface;
 
 /**
  * Extends the BearerTokenResponse for adding
@@ -63,7 +63,7 @@ class OidcResponse extends BearerTokenResponse
         }
 
         /* @var \League\OAuth2\Server\Entities\UserEntityInterface $userEntity */
-        $userEntity = $this->identityProvider->getUserEntityByIdentifier($accessToken->getUserIdentifier());
+        $userEntity = $this->identityProvider->getUserEntityByIdentifier((string) $accessToken->getUserIdentifier());
 
         switch (false) {
             case is_a($userEntity, UserEntityInterface::class):

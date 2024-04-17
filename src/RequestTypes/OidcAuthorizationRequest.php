@@ -1,8 +1,10 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace DalPraS\OpenId\Server\RequestTypes;
 
-class OidcAuthorizationRequest extends \League\OAuth2\Server\RequestTypes\AuthorizationRequest
+use League\OAuth2\Server\RequestTypes\AuthorizationRequest;
+
+class OidcAuthorizationRequest extends AuthorizationRequest
 {
     /**
      * The nonce parameter on the authorization request
@@ -16,23 +18,15 @@ class OidcAuthorizationRequest extends \League\OAuth2\Server\RequestTypes\Author
      * in the Authentication Request. 
      * Authorization Servers SHOULD perform no other processing on nonce values used. 
      * The nonce value is a case sensitive string.
-     *
-     * @var string|null
      */
-    protected $nonce;
+    protected ?string $nonce = null;
     
-    /**
-     * @return string|null
-     */
-    public function getNonce()
+    public function getNonce(): ?string
     {
         return $this->nonce;
     }
 
-    /**
-     * @param string|null $nonce
-     */
-    public function setNonce($nonce)
+    public function setNonce(?string $nonce): void
     {
         $this->nonce = $nonce;
     }

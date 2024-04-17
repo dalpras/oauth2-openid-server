@@ -1,9 +1,11 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace DalPraS\OpenId\Server\Entities;
 
-interface UserEntityInterface extends 
-    \League\OAuth2\Server\Entities\UserEntityInterface, 
-    \DalPraS\OpenId\Server\Entities\ClaimSetInterface {
+use DalPraS\OpenId\Server\Entities\ClaimSetInterface;
+use League\OAuth2\Server\Entities\UserEntityInterface as LeagueUserEntityInterface;
 
-}
+interface UserEntityInterface extends 
+    LeagueUserEntityInterface, 
+    ClaimSetInterface 
+{}

@@ -1,15 +1,16 @@
-<?php
+<?php declare(strict_types=1);
+
 namespace DalPraS\OpenId\Server\Entities\Traits;
 
 use DateTimeImmutable;
-use Lcobucci\JWT\Configuration;
-use Lcobucci\JWT\Signer\Key\InMemory;
-use Lcobucci\JWT\Signer\Rsa\Sha256;
 use Lcobucci\JWT\Token;
+use Lcobucci\JWT\Configuration;
 use League\OAuth2\Server\CryptKey;
-use League\OAuth2\Server\Entities\ClientEntityInterface;
-use League\OAuth2\Server\Entities\ScopeEntityInterface;
+use Lcobucci\JWT\Signer\Rsa\Sha256;
+use Lcobucci\JWT\Signer\Key\InMemory;
 use Lcobucci\JWT\Encoding\ChainedFormatter;
+use League\OAuth2\Server\Entities\ScopeEntityInterface;
+use League\OAuth2\Server\Entities\ClientEntityInterface;
 
 /**
  * This is the same of AccessTokenTrait of league/oauth2-server.
