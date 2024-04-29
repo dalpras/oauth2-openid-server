@@ -8,28 +8,28 @@
 
 namespace DalPraS\OpenId\Server\Grant;
 
-use stdClass;
-use Exception;
-use DateInterval;
-use LogicException;
-use DateTimeImmutable;
-use League\OAuth2\Server\RequestEvent;
-use Psr\Http\Message\ServerRequestInterface;
-use League\OAuth2\Server\RequestAccessTokenEvent;
-use League\OAuth2\Server\RequestRefreshTokenEvent;
-use DalPraS\OpenId\Server\ResponseTypes\OidcResponse;
-use League\OAuth2\Server\Entities\UserEntityInterface;
-use League\OAuth2\Server\Grant\AbstractAuthorizeGrant;
-use League\OAuth2\Server\Entities\ClientEntityInterface;
-use League\OAuth2\Server\Exception\OAuthServerException;
-use League\OAuth2\Server\ResponseTypes\RedirectResponse;
-use League\OAuth2\Server\RequestTypes\AuthorizationRequest;
-use League\OAuth2\Server\CodeChallengeVerifiers\S256Verifier;
-use League\OAuth2\Server\ResponseTypes\ResponseTypeInterface;
-use League\OAuth2\Server\CodeChallengeVerifiers\PlainVerifier;
 use DalPraS\OpenId\Server\RequestTypes\OidcAuthorizationRequest;
+use DalPraS\OpenId\Server\ResponseTypes\OidcResponse;
+use DateInterval;
+use DateTimeImmutable;
+use Exception;
+use League\OAuth2\Server\CodeChallengeVerifiers\PlainVerifier;
+use League\OAuth2\Server\CodeChallengeVerifiers\S256Verifier;
+use League\OAuth2\Server\Entities\ClientEntityInterface;
+use League\OAuth2\Server\Entities\UserEntityInterface;
+use League\OAuth2\Server\Exception\OAuthServerException;
+use League\OAuth2\Server\Grant\AbstractAuthorizeGrant;
 use League\OAuth2\Server\Repositories\AuthCodeRepositoryInterface;
 use League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface;
+use League\OAuth2\Server\RequestAccessTokenEvent;
+use League\OAuth2\Server\RequestEvent;
+use League\OAuth2\Server\RequestRefreshTokenEvent;
+use League\OAuth2\Server\RequestTypes\AuthorizationRequest;
+use League\OAuth2\Server\ResponseTypes\RedirectResponse;
+use League\OAuth2\Server\ResponseTypes\ResponseTypeInterface;
+use LogicException;
+use Psr\Http\Message\ServerRequestInterface;
+use stdClass;
 
 /**
  * Using the code of \League\OAuth2\Server\Grant\AuthCodeGrant.
@@ -88,7 +88,7 @@ class OidcAuthCodeGrant extends AbstractAuthorizeGrant
 
     /**
      * Respond to an access token request.
-     * 
+     *
      * @param ServerRequestInterface $request
      * @param ResponseTypeInterface  $responseType
      * @param DateInterval           $accessTokenTTL
@@ -135,46 +135,25 @@ class OidcAuthCodeGrant extends AbstractAuthorizeGrant
             throw OAuthServerException::invalidRequest('code', 'Cannot decrypt the authorization code', $e);
         }
 
-        // Validate code challenge
-        if (!empty($authCodePayload->code_challenge)) {
-            $codeVerifier = $this->getRequestParameter('code_verifier', $request, null);
+        $codeVerifier = $this->getRequestParameter('code_verifier', $request, null);
 
-            if ($codeVerifier === null) {
-                throw OAuthServerException::invalidRequest('code_verifier');
-            }
-
-            // Validate code_verifier according to RFC-7636
-            // @see: https://tools.ietf.org/html/rfc7636#section-4.1
-            if (\preg_match('/^[A-Za-z0-9-._~]{43,128}$/', $codeVerifier) !== 1) {
-                throw OAuthServerException::invalidRequest(
-                    'code_verifier',
-                    'Code Verifier must follow the specifications of RFC-7636.'
-                );
-            }
-
-            if (\property_exists($authCodePayload, 'code_challenge_method')) {
-                if (isset($this->codeChallengeVerifiers[$authCodePayload->code_challenge_method])) {
-                    $codeChallengeVerifier = $this->codeChallengeVerifiers[$authCodePayload->code_challenge_method];
-
-                    if ($codeChallengeVerifier->verifyCodeChallenge($codeVerifier, $authCodePayload->code_challenge) === false) {
-                        throw OAuthServerException::invalidGrant('Failed to verify `code_verifier`.');
-                    }
-                } else {
-                    throw OAuthServerException::serverError(
-                        \sprintf(
-                            'Unsupported code challenge method `%s`',
-                            $authCodePayload->code_challenge_method
-                        )
-                    );
-                }
-            }
+        // If a code challenge isn't present but a code verifier is, reject the request to block PKCE downgrade attack
+        if (empty($authCodePayload->code_challenge) && $codeVerifier !== null) {
+            throw OAuthServerException::invalidRequest(
+                'code_challenge',
+                'code_verifier received when no code_challenge is present'
+            );
         }
 
-        /* @var $responseType \DalPraS\OpenId\Server\ResponseTypes\OidcResponse */
+        if (!empty($authCodePayload->code_challenge)) {
+            $this->validateCodeChallenge($authCodePayload, $codeVerifier);
+        }
+
         // Issue and persist new access token
         $accessToken = $this->issueAccessToken($accessTokenTTL, $client, $authCodePayload->user_id, $scopes);
         $this->getEmitter()->emit(new RequestAccessTokenEvent(RequestEvent::ACCESS_TOKEN_ISSUED, $request, $accessToken));
         $responseType->setAccessToken($accessToken);
+        /* @var $responseType \DalPraS\OpenId\Server\ResponseTypes\OidcResponse */
         $responseType->setNonce($authCodePayload->nonce);
 
         // Issue and persist new refresh token if given
@@ -189,6 +168,39 @@ class OidcAuthCodeGrant extends AbstractAuthorizeGrant
         $this->authCodeRepository->revokeAuthCode($authCodePayload->auth_code_id);
 
         return $responseType;
+    }
+
+    private function validateCodeChallenge($authCodePayload, $codeVerifier)
+    {
+        if ($codeVerifier === null) {
+            throw OAuthServerException::invalidRequest('code_verifier');
+        }
+
+        // Validate code_verifier according to RFC-7636
+        // @see: https://tools.ietf.org/html/rfc7636#section-4.1
+        if (\preg_match('/^[A-Za-z0-9-._~]{43,128}$/', $codeVerifier) !== 1) {
+            throw OAuthServerException::invalidRequest(
+                'code_verifier',
+                'Code Verifier must follow the specifications of RFC-7636.'
+            );
+        }
+
+        if (\property_exists($authCodePayload, 'code_challenge_method')) {
+            if (isset($this->codeChallengeVerifiers[$authCodePayload->code_challenge_method])) {
+                $codeChallengeVerifier = $this->codeChallengeVerifiers[$authCodePayload->code_challenge_method];
+
+                if ($codeChallengeVerifier->verifyCodeChallenge($codeVerifier, $authCodePayload->code_challenge) === false) {
+                    throw OAuthServerException::invalidGrant('Failed to verify `code_verifier`.');
+                }
+            } else {
+                throw OAuthServerException::serverError(
+                    \sprintf(
+                        'Unsupported code challenge method `%s`',
+                        $authCodePayload->code_challenge_method
+                    )
+                );
+            }
+        }
     }
 
     /**
@@ -373,7 +385,8 @@ class OidcAuthCodeGrant extends AbstractAuthorizeGrant
         if (! $authorizationRequest instanceof OidcAuthorizationRequest) {
             throw new LogicException('AuthorizationRequest have to be a valid instance of OidcAuthorizationRequest');
         }
-        if (! $authorizationRequest->getUser() instanceof UserEntityInterface ) {
+        
+        if ($authorizationRequest->getUser() instanceof UserEntityInterface === false) {
             throw new LogicException('An instance of UserEntityInterface should be set on the AuthorizationRequest');
         }
 
