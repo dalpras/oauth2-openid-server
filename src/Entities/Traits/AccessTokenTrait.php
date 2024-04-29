@@ -3,51 +3,13 @@
 namespace DalPraS\OpenId\Server\Entities\Traits;
 
 use DateTimeImmutable;
-use Lcobucci\JWT\Token;
-use Lcobucci\JWT\Configuration;
-use League\OAuth2\Server\CryptKey;
-use Lcobucci\JWT\Signer\Rsa\Sha256;
-use Lcobucci\JWT\Signer\Key\InMemory;
 use Lcobucci\JWT\Encoding\ChainedFormatter;
-use League\OAuth2\Server\Entities\ScopeEntityInterface;
-use League\OAuth2\Server\Entities\ClientEntityInterface;
+use Lcobucci\JWT\Token;
+use League\OAuth2\Server\Entities\Traits\AccessTokenTrait as LeagueAccessTokenTrait;
 
-/**
- * This is the same of AccessTokenTrait of league/oauth2-server.
- * But the builder is modified for converting the dates to unixtimestamp without microseconds.
- * That's because some oauth clients convert the date from "long" integer values. (ie keycloak) 
- */
 trait AccessTokenTrait
 {
-    /**
-     * @var CryptKey
-     */
-    private $privateKey;
-
-    /**
-     * @var Configuration
-     */
-    private $jwtConfiguration;
-
-    /**
-     * Set the private key used to encrypt this access token.
-     */
-    public function setPrivateKey(CryptKey $privateKey)
-    {
-        $this->privateKey = $privateKey;
-    }
-
-    /**
-     * Initialise the JWT Configuration.
-     */
-    public function initJwtConfiguration()
-    {
-        $this->jwtConfiguration = Configuration::forAsymmetricSigner(
-            new Sha256(),
-            InMemory::plainText($this->privateKey->getKeyContents(), $this->privateKey->getPassPhrase() ?? ''),
-            InMemory::plainText('empty', 'empty')
-        );        
-    }
+    use LeagueAccessTokenTrait;
 
     /**
      * Generate a JWT from the access token
@@ -59,46 +21,14 @@ trait AccessTokenTrait
         $this->initJwtConfiguration();
 
         return $this->jwtConfiguration->builder(ChainedFormatter::withUnixTimestampDates())
-            ->permittedFor($this->getClient()->getIdentifier())
-            ->identifiedBy($this->getIdentifier())
-            ->issuedAt(new DateTimeImmutable())
-            ->canOnlyBeUsedAfter(new DateTimeImmutable())
-            ->expiresAt($this->getExpiryDateTime())
+            ->permittedFor($this->getClient()->getIdentifier()) // Configures the audience (aud claim)
+            ->identifiedBy($this->getIdentifier())        // Configures the id (jti claim), replicating as a header item
+            ->issuedAt(new DateTimeImmutable())           // Configures the time that the token was issue (iat claim)
+            ->canOnlyBeUsedAfter(new DateTimeImmutable()) // Configures the time that the token can be used (nbf claim)
+            ->expiresAt($this->getExpiryDateTime())       // Configures the expiration time of the token (exp claim)
+            // ->withHeader('kid', 'your-key-id')            // Configures a new header, called "kid"
             ->relatedTo((string) $this->getUserIdentifier())
             ->withClaim('scopes', $this->getScopes())
             ->getToken($this->jwtConfiguration->signer(), $this->jwtConfiguration->signingKey());
     }
-
-    /**
-     * Generate a string representation from the access token
-     */
-    public function __toString()
-    {
-        return $this->convertToJWT()->toString();
-    }
-
-    /**
-     * @return ClientEntityInterface
-     */
-    abstract public function getClient();
-
-    /**
-     * @return DateTimeImmutable
-     */
-    abstract public function getExpiryDateTime();
-
-    /**
-     * @return string|int
-     */
-    abstract public function getUserIdentifier();
-
-    /**
-     * @return ScopeEntityInterface[]
-     */
-    abstract public function getScopes();
-
-    /**
-     * @return string
-     */
-    abstract public function getIdentifier();
 }
