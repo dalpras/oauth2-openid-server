@@ -9,7 +9,7 @@
 namespace DalPraS\OpenId\Server\Grant;
 
 use DalPraS\OpenId\Server\RequestTypes\OidcAuthorizationRequest;
-use DalPraS\OpenId\Server\ResponseTypes\OidcResponse;
+use DalPraS\OpenId\Server\ResponseTypes\BearerIdTokenResponse;
 use DateInterval;
 use DateTimeImmutable;
 use Exception;
@@ -102,7 +102,7 @@ class OidcAuthCodeGrant extends AbstractAuthorizeGrant
         ResponseTypeInterface $responseType,
         DateInterval $accessTokenTTL
     ) {
-        if (! $responseType instanceof OidcResponse) {
+        if (! $responseType instanceof BearerIdTokenResponse) {
             throw OAuthServerException::invalidRequest('responseType');
         }
         list($clientId) = $this->getClientCredentials($request);
@@ -152,8 +152,9 @@ class OidcAuthCodeGrant extends AbstractAuthorizeGrant
         // Issue and persist new access token
         $accessToken = $this->issueAccessToken($accessTokenTTL, $client, $authCodePayload->user_id, $scopes);
         $this->getEmitter()->emit(new RequestAccessTokenEvent(RequestEvent::ACCESS_TOKEN_ISSUED, $request, $accessToken));
+        
+        /* @var $responseType \DalPraS\OpenId\Server\ResponseTypes\BearerIdTokenResponse */
         $responseType->setAccessToken($accessToken);
-        /* @var $responseType \DalPraS\OpenId\Server\ResponseTypes\OidcResponse */
         $responseType->setNonce($authCodePayload->nonce);
 
         // Issue and persist new refresh token if given
