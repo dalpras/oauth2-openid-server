@@ -26,7 +26,7 @@ trait AccessTokenTrait
             ->issuedAt(new DateTimeImmutable())           // Configures the time that the token was issue (iat claim)
             ->canOnlyBeUsedAfter(new DateTimeImmutable()) // Configures the time that the token can be used (nbf claim)
             ->expiresAt($this->getExpiryDateTime())       // Configures the expiration time of the token (exp claim)
-            ->withClaim('kid', self::rotateKid())         // Configures a new claim, called "kid"
+            ->withHeader('kid', self::getKid())           // Configures the header to get the correct key on HWKS configurations ("kid")
             ->relatedTo((string) $this->getUserIdentifier())
             ->withClaim('scopes', $this->getScopes())
             ->getToken($this->jwtConfiguration->signer(), $this->jwtConfiguration->signingKey());
@@ -34,8 +34,6 @@ trait AccessTokenTrait
 
     /**
      * Rotate the value to be used in "kid" claim
-     * 
-     * @return string
      */
-    abstract public static function rotateKid();
+    abstract public static function getKid(): string;
 }

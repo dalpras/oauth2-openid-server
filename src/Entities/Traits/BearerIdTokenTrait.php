@@ -3,11 +3,11 @@
 namespace DalPraS\OpenId\Server\Entities\Traits;
 
 use DalPraS\OpenId\Server\ClaimExtractor;
+use DalPraS\OpenId\Server\Entities\AccessTokenEntityInterface;
 use DalPraS\OpenId\Server\Repositories\IdentityProviderInterface;
 use DateTimeImmutable;
 use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Encoding\ChainedFormatter;
-use League\OAuth2\Server\Entities\AccessTokenEntityInterface;
 
 trait BearerIdTokenTrait
 {
@@ -15,7 +15,8 @@ trait BearerIdTokenTrait
 
     private function convertToJWT()
     {
-        // $this->initJwtConfiguration();
+        /** @var \DalPraS\OpenId\Server\ResponseTypes\BearerIdTokenResponse $this */
+        /** @var \DalPraS\OpenId\Server\Entities\AccessTokenEntityInterface $accessToken */
         $accessToken = $this->accessToken;
 
         /* @var \League\OAuth2\Server\Entities\UserEntityInterface $userEntity */
@@ -28,6 +29,7 @@ trait BearerIdTokenTrait
             ->issuedBy('https://' . $_SERVER['HTTP_HOST'])
             ->issuedAt(new DateTimeImmutable())
             ->expiresAt($accessToken->getExpiryDateTime())
+            ->withHeader('kid', $accessToken::getKid())
             ->relatedTo((string) $userEntity->getIdentifier())
             ->withClaim('at_hash', $this->getAtHash($accessToken))
         ;
